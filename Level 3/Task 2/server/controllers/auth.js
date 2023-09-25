@@ -37,3 +37,24 @@ export const register = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+/* LOGGING IN */
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email: email });
+    if (!user) return res.status(400).json({ msg: 'User does not exist. ' });
+
+    const isMath = bcrypt.compare(password, user.password);
+    if (!isMath) return res.status(400).json({ msg: 'Invalid credentials. ' });
+    // Convert the Mongoose document to a plain JavaScript object
+    const userObject = user.toObject();
+    // Delete the password property from the plain object
+    delete userObject.password;
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    res.status(200).json({ token, user: userObject });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
